@@ -720,7 +720,7 @@ define([
           dropdown : $.isFunction(options.dropdown) ? options.dropdown() : options.dropdown,
           hide : options.hide,
           event : (!options.dropdown) ? plugin : '',
-          value : (!options.dropdown) ? plugin : ''
+          value : (!options.dropdown) ? (options.value !== ? options.value : plugin) : ''
         };
         if (options.icon) {
           return tplIconButton(options.icon, toolbar);
