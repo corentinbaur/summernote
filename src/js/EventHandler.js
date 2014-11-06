@@ -29,6 +29,10 @@ define([
     var toolbar = new Toolbar(), popover = new Popover();
     var handle = new Handle(), dialog = new Dialog();
 
+    this.getEditor = function () {
+      return editor;
+    };
+
     /**
      * returns makeLayoutInfo from editor's descendant node.
      *
@@ -118,23 +122,6 @@ define([
             // array of files
             insertImages($editable, data);
           }
-        }).fail(function () {
-          editor.restoreRange($editable);
-        });
-      },
-
-      /**
-       * @param {Object} layoutInfo
-       */
-      showVideoDialog: function (layoutInfo) {
-        var $dialog = layoutInfo.dialog(),
-            $editable = layoutInfo.editable(),
-            videoInfo = editor.getVideoInfo($editable);
-
-        editor.saveRange($editable);
-        dialog.showVideoDialog($editable, $dialog, videoInfo).then(function (sUrl) {
-          editor.restoreRange($editable);
-          editor.insertVideo($editable, sUrl);
         }).fail(function () {
           editor.restoreRange($editable);
         });
@@ -381,18 +368,15 @@ define([
         if (hide) {
           $btn.parents('.popover').hide();
         }
-        
+
         if (editor[eventName]) { // on command
           var $editable = layoutInfo.editable();
           $editable.trigger('focus');
           editor[eventName]($editable, value, $target);
         } else if (commands[eventName]) {
           commands[eventName].call(this, layoutInfo);
-        } else if ($.summernote.plugins[eventName]) {
-          var plugin = $.summernote.plugins[eventName];
-          if ($.isFunction(plugin.event)) {
-            plugin.event(event, editor, layoutInfo);
-          }
+        } else if ($.isFunction($.summernote.pluginEvents[eventName])) {
+          $.summernote.pluginEvents[eventName](layoutInfo);
         }
 
         // after command
@@ -599,7 +583,9 @@ define([
      */
     this.attach = function (layoutInfo, options) {
       // handlers for editable
-      this.bindKeyMap(layoutInfo, options.keyMap[agent.isMac ? 'mac' : 'pc']);
+      if (options.shortcuts) {
+        this.bindKeyMap(layoutInfo, options.keyMap[agent.isMac ? 'mac' : 'pc']);
+      }
       layoutInfo.editable.on('mousedown', hMousedown);
       layoutInfo.editable.on('keyup mouseup', hToolbarAndPopoverUpdate);
       layoutInfo.editable.on('scroll', hScroll);
@@ -692,7 +678,7 @@ define([
       });
     };
 
-    this.dettach = function (layoutInfo, options) {
+    this.detach = function (layoutInfo, options) {
       layoutInfo.editable.off();
 
       layoutInfo.popover.off();
